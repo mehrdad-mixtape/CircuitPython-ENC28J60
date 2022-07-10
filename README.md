@@ -1,5 +1,5 @@
 # CircuitPython-ENC28J60
-ENC28J60 Ethernet chip driver for MicroPython v1.17 (RP2)
+ENC28J60 Ethernet chip driver for CircuitPython 7.2 (RP2)
 
 ## Rationale
 ENC28J60 is a popular and cheap module for DIY projects.
