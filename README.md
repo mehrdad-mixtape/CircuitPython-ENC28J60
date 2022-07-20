@@ -1,3 +1,4 @@
+# Warning! project is not complete!
 # CircuitPython-ENC28J60
 ENC28J60 Ethernet chip driver for CircuitPython 7.2 (RP2)
 
