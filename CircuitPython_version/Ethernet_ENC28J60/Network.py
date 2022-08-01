@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-# Copyright 2021-2022 Przemyslaw Bereski https://github.com/przemobe/
+#  GPLv3 License
 
-# This is version for MicroPython v1.18
+# Copyright (c) 2022 mehrdad
+# Developed by mehrdad-mixtape https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60
+
+# This is version for circuitpython 7.2 or higher
 
 # This file implements very simple IP stack for ENC28J60 ethernet.
 # Supports:
@@ -11,16 +14,13 @@
 # - IPv4 for not fragmented packets only, single static IP address
 # - ICMPv4: rx Echo Request and tx Echo Response
 
-# Attention! : new version of this code is under development by mehrdad-mixtape
-# This implementation is for MicroPython v1.18 (RP2)
-
 from micropython import const
 import ENC28J60
 from Protection import DOS
 import struct
 
 __version__ = '0.4.0v'
-__repo__ = 'https://github.com/mehrdad-mixtape'
+__repo__ = 'https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60'
 
 ETH_TYPE_IP4 = const(0x0800)
 ETH_TYPE_IP4_S = const(0x00)
@@ -45,15 +45,12 @@ ICMP4_ECHO_REQUEST = const(8)
 
 class Network:
     """This class handle network protcol: ARP, ICMP, IP, UDP, TCP"""
-    def __init__(self, nicSpi, nicCsPin, dosConf: tuple, logger=None):
+    def __init__(self, nicSpi, nicCsPin, dosConf: tuple):
         self.rxBuff = bytearray(ENC28J60.ENC28J60_ETH_RX_BUFFER_SIZE)
-        self.nic = ENC28J60.ENC28J60(nicSpi, nicCsPin, logger=logger)
+        self.nic = ENC28J60.ENC28J60(nicSpi, nicCsPin)
 
         # Eth settings:
         self.myMacAddr = self.nic.ENC28J60_GetMacAddr
-
-        # Logger settings:
-        self._logger = logger
 
         # IPv4 settings:
         self.myIp4Addr: bytearray
@@ -83,9 +80,9 @@ class Network:
 
         # Initialize ENC28J60:
         self.nic.ENC28J60_Init()
-        self.event('DEBUG', 'MAC ADDR is {}'.format(':'.join("{:02x}".format(c) for c in self.myMacAddr)))
+        self.event('MAC ADDR is {}'.format(':'.join("{:02x}".format(c) for c in self.myMacAddr)))
         if self.nic.ENC28J60_GetRevId != 0x06: # mehrdad-mixtape
-            self.event('WARNING', """ENC28J60 revision ID is not readable!
+            self.event("""ENC28J60 revision ID is not readable!
             Check the:
             1. physical connection
                 - ethernet cable
@@ -94,7 +91,7 @@ class Network:
                 - power supply problem
             2. client and server should be in same network
             3. power-off and power-on the system""")
-        else: self.event('INFO', "ENC28J60 revision ID: 0x{:02x}".format(self.nic.ENC28J60_GetRevId))
+        else: self.event("ENC28J60 revision ID: 0x{:02x}".format(self.nic.ENC28J60_GetRevId))
     def setIPv4(self, myIp4Addr: list, netIp4Mask: list, gwIp4Addr: list) -> None:
         self.myIp4Addr = bytearray(myIp4Addr)
         self.netIp4Mask = bytearray(netIp4Mask)
@@ -107,10 +104,8 @@ class Network:
     def isEmptyUdpQ(self) -> bool:
         if len(self.UDP_Q) == 0: return True
         else: return False
-    def event(self, priority: str, msg: str) -> None:
-        try: self._logger.event_registrar('Network', priority, msg)
-        except AttributeError: pass
-        finally: print(f"Network: {msg}")
+    def event(self, msg: str) -> None:
+        print(f"Network: {msg}")
     def rxAllPkt(self) -> None:
         '''Function to rx and process all pending packets from NIC'''
         while True:
@@ -123,7 +118,7 @@ class Network:
                 rxLen = self.nic.ENC28J60_ReceivePacket(self.rxBuff)
                 ## unlock
                 if rxLen <= 0:
-                    self.event('ERROR', f"Rx ERROR {rxLen}")
+                    self.event(f"Rx ERROR {rxLen}")
                     continue
                 procEth(Packet(self, self.rxBuff, rxLen))
             else:
@@ -208,17 +203,17 @@ def makeArpRequest(eth_src: bytearray, ip_src: bytearray, ip_dst: bytes) -> list
 def procArp(pkt: Packet) -> None:
     pkt.ntw.dos.check_arp_limit() # ARP flood protection
     hrtype, prtype, hrlen, prlen, oper, sha, spa, tha, tpa = struct.unpack_from("!HHBBH6s4s6s4s", pkt.frame, pkt.eth_offset) # type: ignore
-    pkt.ntw.event('INFO', f"Rx ARP oper={oper}")
+    pkt.ntw.event(f"Rx ARP oper={oper}")
     if ARP_OP_REQUEST == oper:
         if tpa == pkt.ntw.myIp4Addr:
-            pkt.ntw.event('INFO', f"Rx ARP_REQUEST for my IP from IP {spa[0]}.{spa[1]}.{spa[2]}.{spa[3]}!")
+            pkt.ntw.event(f"Rx ARP_REQUEST for my IP from IP {spa[0]}.{spa[1]}.{spa[2]}.{spa[3]}!")
             reply = makeArpReply(pkt.eth_src, pkt.ntw.myMacAddr, pkt.ntw.myIp4Addr, spa)
             n = pkt.ntw.txPkt(reply)
             if n < 0:
-                pkt.ntw.event('WARNING', f"Fail to send ARP REPLY {n}")
+                pkt.ntw.event(f"Fail to send ARP REPLY {n}")
 
     elif ARP_OP_REPLY == oper:
-        pkt.ntw.event('INFO', f"ARP {spa[0]}.{spa[1]}.{spa[2]}.{spa[3]} is at {sha[0]:02X}:{sha[1]:02X}:{sha[2]:02X}:{sha[3]:02X}:{sha[4]:02X}:{sha[5]:02X}")
+        pkt.ntw.event(f"ARP {spa[0]}.{spa[1]}.{spa[2]}.{spa[3]} is at {sha[0]:02X}:{sha[1]:02X}:{sha[2]:02X}:{sha[3]:02X}:{sha[4]:02X}:{sha[5]:02X}")
         pkt.ntw.addArpEntry(spa, sha)
 
 def makeIp4Hdr(src: bytearray, tgt: bytes, ident: int, proto: int, dataLen: int, ttl=128, dscp=0, ecn=0) -> bytearray:
@@ -255,18 +250,18 @@ def procIp4(pkt: Packet) -> None:
     # pkt.ntw.ip4RxCount += 1 # 
 
     if pkt.ip_ver != 4:
-        pkt.ntw.event('ERROR', f"ip_ver={pkt.ip_ver} not supported!")
+        pkt.ntw.event(f"ip_ver={pkt.ip_ver} not supported!")
 
     if pkt.ip_hdrlen != 20:
-        pkt.ntw.event('ERROR', f"ip_hdrlen={pkt.ip_hdrlen} not supported!")
+        pkt.ntw.event(f"ip_hdrlen={pkt.ip_hdrlen} not supported!")
 
     flags_mf = (ip_flags_fragoffset >> 13) & 0x01
     fragOffset = (ip_flags_fragoffset & 0x1FFF) << 3
     if (0 != flags_mf) or (0 != fragOffset):
-        pkt.ntw.event('ERROR', f"Fragmented IPv4 not supported: fragOffset={fragOffset}, flags_mf={flags_mf}")
+        pkt.ntw.event(f"Fragmented IPv4 not supported: fragOffset={fragOffset}, flags_mf={flags_mf}")
 
     if pkt.ip_dst_addr == pkt.ntw.myIp4Addr:
-        pkt.ntw.event('INFO', f"Rx my IP proto={pkt.ip_proto}")
+        pkt.ntw.event(f"Rx my IP proto={pkt.ip_proto}")
         if pkt.ip_proto == IP4_TYPE_ICMP:
             procIcmp4(pkt)
         elif pkt.ip_proto == IP4_TYPE_UDP:
@@ -314,7 +309,7 @@ def procIcmp4(pkt: Packet) -> None:
     if pkt.frame[offset] == ICMP4_ECHO_REQUEST:
         sendIcmp4EchoReply(pkt)
     else:
-        pkt.ntw.event('INFO', f"Rx ICMP op={pkt.frame[offset]}")
+        pkt.ntw.event(f"Rx ICMP op={pkt.frame[offset]}")
 
 def printEthPkt(pkt) -> None:
     print('DST:', ":".join("{:02x}".format(c) for c in pkt.frame[0:6]),
@@ -384,7 +379,7 @@ def procUdp4(pkt: Packet, bcast: bool=False) -> None:
         if chksm == 0:
             chksm = 0xFFFF
         if (chksm != chksm_rx):
-            pkt.ntw.event('ERROR', f"Invalid UDP chksm: rx={chksm_rx:04X} calc=0x{chksm:04X}")
+            pkt.ntw.event(f"Invalid UDP chksm: rx={chksm_rx:04X} calc=0x{chksm:04X}")
             return None
 
     # # call UDP client
