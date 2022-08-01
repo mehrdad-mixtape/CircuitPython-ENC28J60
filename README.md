@@ -128,19 +128,19 @@ if __name__ == '__main__':
 # Test:
 
 ## First Interview:
-![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/1.png?raw=true)
+![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/img1.png)
 - `Server is Alive`
 - After successfully connecting with **udp_server.py**, pico sends `req>>time` to **udp_server.py** and updates the date and time itself.
 - Pico tries to sends a random message to the server every 10 seconds and **udp_server.py** sends `ack>>pk` to pico
 
 ## Try Ping Pico:
-![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/2.png?raw=true)
+![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/img2.png)
 
 ## Try DoS Attack to Pico with hping3:
-![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/3.png?raw=true)
+![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/img3.png)
 - *$ sudo hping3 -2 -c 10000 --flood 192.168.1.198*
 - Dos config for UDP limit is **150** packet.
 
 ## Kill udp_server.py:
-![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/4.png?raw=true)
+![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/img4.png)
 - When you killed **udp_server.py**, pico sends `req>>alive` to **udp_server.py** after few seconds. if **udp_server.py** can't sends `alive>>yes` to pico, pico changes the **udp_server.py** status to `Server is Dead`.
