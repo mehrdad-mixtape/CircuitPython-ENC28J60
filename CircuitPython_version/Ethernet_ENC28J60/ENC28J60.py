@@ -11,8 +11,12 @@
 #   as published by the Free Software Foundation; either version 2
 #   of the License, or (at your option) any later version.
 
-# Attention! : new version of this code is under development by mehrdad-mixtape
-# This implementation is for circuit-python 7.2
+#  GPLv3 License
+
+# Copyright (c) 2022 mehrdad
+# Developed by mehrdad-mixtape https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60
+
+# This is version for circuitpython 7.2 or higher
 
 # ENC28J60 Ethernet
 # SPI1
@@ -33,7 +37,7 @@ from sys import exit
 import struct
 
 __version__ = '0.2.0v'
-__repo__ = 'https://github.com/mehrdad-mixtape'
+__repo__ = 'https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60'
 
 # RX buffer size
 ENC28J60_ETH_RX_BUFFER_SIZE = const(1536)
@@ -430,9 +434,7 @@ class ENC28J60:
     baudrate: int=120_000,
     macAddr: bytearray=None,
     fullDuplex: bool=True,
-    enableMulticastRx: bool=False,
-    logger=None):
-        self._logger = logger
+    enableMulticastRx: bool=False):
         try:
             # CS pin
             self._cs = DigitalInOut(cs)
@@ -465,14 +467,12 @@ class ENC28J60:
         if self._revId is None or self._revId == 0:
             self._revId = self.ENC28J60_ReadReg(ENC28J60_EREVID) & ENC28J60_EREVID_REV
         return self._revId
-    def ENC28J60_Event(self, priority: str, msg: str) -> None:
-        try: self._logger.event_registrar('ENC28J60', priority, msg)
-        except AttributeError: pass
-        finally: print(f"ENC28J60: {msg}")
+    def ENC28J60_Event(self, msg: str) -> None:
+        print(f"ENC28J60: {msg}")
     def ENC28J60_Init(self) -> None:
         """Initialize ENC28J60"""
-        if ENC28J60.spi_detect: self.ENC28J60_Event('INFO', 'SPIDevice detected')
-        else: self.ENC28J60_Event('ERROR', 'SPIDevice undetected'); return None
+        if ENC28J60.spi_detect: self.ENC28J60_Event('SPIDevice detected')
+        else: self.ENC28J60_Event('SPIDevice undetected'); return None
         self.ENC28J60_SoftReset() # Issue a system reset
 
         sleep(0.01) # After issuing the reset command, wait at least 1ms in firmware for the device to be ready
@@ -578,7 +578,7 @@ class ENC28J60:
         # Set RXEN to enable reception
         self.ENC28J60_WriteReg(ENC28J60_ECON1, ENC28J60_ECON1_RXEN)
         # Show event
-        self.ENC28J60_Event('INFO', 'Ethernet initialized')
+        self.ENC28J60_Event('Ethernet initialized')
     def ENC28J60_WriteSpi(self, data: bytearray) -> None:
         self._cs.value = 0
         with self._spi as bus:
@@ -587,7 +587,7 @@ class ENC28J60:
     def ENC28J60_SoftReset(self) -> None:
         self._tmpBytearray1B[0] = ENC28J60_CMD_SRC
         self.ENC28J60_WriteSpi(self._tmpBytearray1B)
-        self.ENC28J60_Event('DEBUG', 'SPIDevice softreset')
+        self.ENC28J60_Event('SPIDevice softreset')
     def ENC28J60_ClearBit(self, address: int, mask: int) -> None:
         self._tmpBytearray2B[0] = (ENC28J60_CMD_BFC | (address & REG_ADDR_MASK))
         self._tmpBytearray2B[1] = mask
@@ -726,7 +726,7 @@ class ENC28J60:
 
         # Check whether the link state has changed
         if (status & ENC28J60_EIR_LINKIF) == 0:
-            self.ENC28J60_Event('WARNING', 'Ethernet link stat has changed')
+            self.ENC28J60_Event('Ethernet link stat has changed')
             return False
 
         # Clear PHY interrupts flags
