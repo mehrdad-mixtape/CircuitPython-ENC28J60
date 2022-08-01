@@ -142,5 +142,5 @@ if __name__ == '__main__':
 - Dos config for UDP limit is **150** packet.
 
 ## Kill udp_server.py:
-![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/img4.png)
+![alt text](https://github.com/mehrdad-mixtape/CircuitPython-ENC28J60/blob/main/CircuitPython_version/Images/img4.png?raw=true)
 - When you killed **udp_server.py**, pico sends `req>>alive` to **udp_server.py** after few seconds. if **udp_server.py** can't sends `alive>>yes` to pico, pico changes the **udp_server.py** status to `Server is Dead`.
