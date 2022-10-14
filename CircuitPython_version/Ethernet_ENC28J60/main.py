@@ -32,7 +32,7 @@ def main() -> None:
     for _ in range(0, 5):
         ethernet.send_request(which='alive', waiting_for=2)
         if ethernet.is_server_alive:
-            ethernet.tx_udp(f"id>>I'm Pico"); break
+            ethernet.tx_packet(f"id>>I'm Pico"); break
     ethernet.send_request(which='ntp') # request localtime
     ethernet.date_and_time()
 
@@ -42,7 +42,7 @@ def main() -> None:
     while True:
         if ethernet.kill_switch_stat:
             # Ready for ARP, ICMP, IP, UDP, ... ---------------------------------------------
-            ethernet.rx_udp()
+            ethernet.rx_packet()
             # Threshold: ---------------------------------------------
             threshold = time() - start
             print(f"Threshold is {threshold}")
@@ -51,7 +51,7 @@ def main() -> None:
             ethernet.date_and_time()
             # Update Clock: ---------------------------------------------
             if threshold % 10 == 0: # send random udp packet
-                ethernet.tx_udp(choice(['msg>>Hello Pico', 'MixTape', 'ENC28J60 with CircuitPython']))
+                ethernet.tx_packet(choice(['msg>>Hello Pico', 'MixTape', 'ENC28J60 with CircuitPython']))
             elif 59 <= threshold < 60: # update date and time
                 ethernet.send_request(which='ntp')
             elif 79 <= threshold < 80: # check the connection and is server alive?
@@ -66,7 +66,7 @@ def main() -> None:
 
         else: # Under Attack
             print('Pico Under Attack! CoolDown ...')
-            ethernet.tx_udp('Critical DOS Attack!')
+            ethernet.tx_packet('Critical DOS Attack!')
             ethernet.cool_down(timer=30, msg='UnderDOSAttack', op='CoolDown')
             collect() # free up memory space
             start = time()
