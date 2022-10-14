@@ -196,14 +196,14 @@ class UDP:
             ...
         """
         if which == 'ntp': # get clock from software side, same as ntp
-            self.tx_udp('req>>time')
+            self.tx_packet('req>>time')
             return True
         elif which == 'alive':
-            self.tx_udp('req>>alive')
+            self.tx_packet('req>>alive')
             try: sleep(kwargs['waiting_for'] if kwargs['waiting_for'] <= 10 else 10)
             except (KeyError, TypeError): sleep(5)
             finally:
-                self.rx_udp()
+                self.rx_packet()
                 if self.parse_udp():
                     self.event('Server is Alive')
                     self._keep_alive_server = ALIVE
@@ -250,7 +250,7 @@ class UDP:
             except ValueError:
                 result = False
         return result
-    def tx_udp(self, payload: str, method: str=UNICAST) -> None:
+    def tx_packet(self, payload: str, method: str=UNICAST) -> None:
         """Send udp payloads to server"""
         if self.is_link != CONNECTED:
             self._try_to_connect()
@@ -267,7 +267,7 @@ class UDP:
                     self.event(f"Stat is {'IDLE' if self.is_link == 0 else 'CONNECTING' if self.is_link == 1 else 'ERROR'}")
             elif method == BROADCAST: pass
             else: pass
-    def rx_udp(self) -> None:
+    def rx_packet(self) -> None:
         self._network.rxAllPkt()
         self.event(f"\n{self._network.dos.check_warning}")
         if not self._network.dos.flag_state:
